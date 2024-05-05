@@ -56,6 +56,7 @@ def execute_command(command):
     except subprocess.CalledProcessError as e:
         print(f"Error executing command: {e}")
         return ""
+        
 if __name__ == "__main__":
     #  drivers = drive_grabber('vulndrivers.txt')
     host_drivers = execute_command('driverquery')
