@@ -86,8 +86,9 @@ def main():
 
         raw_scraped_lol_driver_data = web_scrape_and_process('https://www.loldrivers.io','row')
         scraped_and_parsed_lol_driver_data = scraped_vulnerable_driver_parser(raw_scraped_lol_driver_data)
+        sorted_scraped_and_parsed_lol_driver_data = sorted(scraped_and_parsed_lol_driver_data)
 
-        matching_lol_drivers = find_matching_drivers(scraped_and_parsed_lol_driver_data, sorted_host_drivers)
+        matching_lol_drivers = find_matching_drivers(sorted_scraped_and_parsed_lol_driver_data, sorted_host_drivers)
 
 
         data = web_scrape_and_process('https://learn.microsoft.com/en-us/windows/security/application-security/application-control/windows-defender-application-control/design/microsoft-recommended-driver-block-rules','lang-xml')
