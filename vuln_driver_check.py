@@ -28,18 +28,6 @@ def web_scrape_and_process(url, class_to_scrape):
 
     return extracted_data
 
-def web_scrape_xml_and_process(url, element_id):
-    extracted_data = []
-    response = requests.get(url)
-    if response.status_code == 200:
-        soup = BeautifulSoup(response.text, 'html.parser')
-
-        elements_with_class = soup.find_all(class_= element_id)
-        for element in elements_with_class:
-            extracted_data.append(element.text)
-
-        return extracted_data
-
 def scraped_vulnerable_driver_parser(data):
     driver_list =  []
     for line in data:
@@ -102,7 +90,7 @@ def main():
         matching_lol_drivers = find_matching_drivers(scraped_and_parsed_lol_driver_data, sorted_host_drivers)
 
 
-        data = web_scrape_xml_and_process('https://learn.microsoft.com/en-us/windows/security/application-security/application-control/windows-defender-application-control/design/microsoft-recommended-driver-block-rules','lang-xml')
+        data = web_scrape_and_process('https://learn.microsoft.com/en-us/windows/security/application-security/application-control/windows-defender-application-control/design/microsoft-recommended-driver-block-rules','lang-xml')
         parsed_windows_driver_data = microsoft_driver_parser(data)
         sorted_parsed_windows_driver_data = sorted(parsed_windows_driver_data)
 
