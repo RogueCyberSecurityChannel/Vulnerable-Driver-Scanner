@@ -102,11 +102,13 @@ def main():
 
         matching_lol_drivers = find_matching_drivers(scraped_and_parsed_lol_driver_data, sorted_host_drivers)
 
-        print(f'  [+] Web scraping updated vulnerable driver list from https://learn.microsoft.com/en-us/windows/security/application-security/application-control/windows-defender-application-control/design/microsoft-recommended-driver-block-rules')
-        time.sleep(2)
+
         data = web_scrape_xml_and_process('https://learn.microsoft.com/en-us/windows/security/application-security/application-control/windows-defender-application-control/design/microsoft-recommended-driver-block-rules','lang-xml')
         parsed_windows_driver_data = microsoft_driver_parser(data)
         sorted_parsed_windows_driver_data = sorted(parsed_windows_driver_data)
+
+        print(f'  [+] Web scraping updated vulnerable driver list from https://learn.microsoft.com/en-us/windows/security/application-security/application-control/windows-defender-application-control/design/microsoft-recommended-driver-block-rules')
+        time.sleep(2)
 
         matching_windows_drivers = find_matching_drivers(sorted_parsed_windows_driver_data, sorted_host_drivers)
 
@@ -152,10 +154,7 @@ def main():
 
         time.sleep(2)
     else:
-
-        time.sleep(2)
         print(f'  [+] No vulnerable drivers detected on your machine\n')
 
-        time.sleep(2)
 if __name__ == "__main__":
     main()
