@@ -116,8 +116,7 @@ def main():
             matching_drivers.append(matching_lol_drivers)
         if len(matching_windows_drivers):
             matching_drivers.append(matching_windows_drivers)
-        test = ['test']
-        matching_drivers.append(test)
+
     except (ConnectionError, RequestException) as e:
         time.sleep(1)
 
