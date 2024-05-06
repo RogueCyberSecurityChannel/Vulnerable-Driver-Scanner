@@ -38,20 +38,20 @@ def lol_vulnerable_driver_parser(data):
     return driver_list
 
 def microsoft_driver_parser(data):
-    element_list = []
+    driver_list = []
     for line in data:
-        element_names = line.split()
-        for element_name in element_names:
-            if 'FileName' in element_name:
-                element_list.append(element_name[10:])
-        final_element_list = []
-        for element_name in element_list:
-                if '.'  or '\"'in element_name:
-                    index = element_name.find('.')
-                    final_element_list.append(element_name[:index])
+        drivers = line.split()
+        for driver in drivers:
+            if 'FileName' in driver:
+                driver_list.append(driver[10:])
+        final_driver_list = []
+        for driver in driver_list:
+                if '.'  or '\"'in driver:
+                    index = driver.find('.')
+                    final_driver_list.append(driver[:index])
                 else:
-                    final_element_list.append(element_name)
-    return final_element_list[2:]
+                    final_driver_list.append(driver)
+    return final_driver_list[2:]
 
 def query_and_parse_host_drivers(command):
     try:
