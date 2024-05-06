@@ -28,7 +28,7 @@ def web_scrape_and_process(url, class_to_scrape):
 
     return extracted_data
 
-def scraped_vulnerable_driver_parser(data):
+def lol_vulnerable_driver_parser(data):
     driver_list =  []
     for line in data:
         drivers = line.split()
@@ -85,7 +85,7 @@ def main():
         time.sleep(2)
 
         raw_scraped_lol_driver_data = web_scrape_and_process('https://www.loldrivers.io','row')
-        scraped_and_parsed_lol_driver_data = scraped_vulnerable_driver_parser(raw_scraped_lol_driver_data)
+        scraped_and_parsed_lol_driver_data = lol_vulnerable_driver_parser(raw_scraped_lol_driver_data)
         sorted_scraped_and_parsed_lol_driver_data = sorted(scraped_and_parsed_lol_driver_data)
 
         matching_lol_drivers = find_matching_drivers(sorted_scraped_and_parsed_lol_driver_data, sorted_host_drivers)
