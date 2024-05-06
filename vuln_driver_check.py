@@ -28,7 +28,6 @@ def web_scrape_and_process(url, class_to_scrape):
 
     return extracted_data
 
-
 def web_scrape_xml_and_process(url, element_id):
     extracted_data = []
     response = requests.get(url)
