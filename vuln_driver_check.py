@@ -13,7 +13,7 @@ def welcome():
    __ |/ / / /_/ /_  / _  / / /     _  /_/ /_  /   _  / __ |/ //  __/  /
    _____/  \__,_/ /_/  /_/ /_/      /_____/ /_/    /_/  _____/ \___//_/
   --------------------------------------------------------------------------
-''')
+           {GitHub:https://github.com/RogueCyberSecurityChannel}''')
 
 def web_scrape_and_process(url, class_to_scrape):
     extracted_data = []
@@ -76,7 +76,7 @@ def main():
         host_drivers = query_and_parse_host_drivers('driverquery')
         sorted_host_drivers = sorted(host_drivers)
 
-        print(f'  [+] Querying host drivers')
+        print(f'  \n  [+] Querying host drivers')
         time.sleep(1)
 
         print(f'  [+] Web scraping updated vulnerable driver list from https://www.loldrivers.io')
