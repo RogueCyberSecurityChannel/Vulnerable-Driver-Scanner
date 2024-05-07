@@ -25,7 +25,6 @@ def web_scrape_and_process(url, class_to_scrape):
         elements_with_class = soup.find_all(class_= class_to_scrape)
         for element in elements_with_class:
             extracted_data.append(element.text)
-
     return extracted_data
 
 def lol_vulnerable_driver_parser(data):
@@ -84,21 +83,21 @@ def main():
         print(f'  [+] Web scraping updated vulnerable driver list from https://www.loldrivers.io')
         time.sleep(2)
 
-        raw_scraped_lol_driver_data = web_scrape_and_process('https://www.loldrivers.io','row')
-        scraped_and_parsed_lol_driver_data = lol_vulnerable_driver_parser(raw_scraped_lol_driver_data)
-        sorted_scraped_and_parsed_lol_driver_data = sorted(scraped_and_parsed_lol_driver_data)
+        data = web_scrape_and_process('https://www.loldrivers.io','row')
+        parsed_lol_driver_data = lol_vulnerable_driver_parser(data)
+        sorted_lol_driver_data = sorted(parsed_lol_driver_data)
 
-        matching_lol_drivers = find_matching_drivers(sorted_scraped_and_parsed_lol_driver_data, sorted_host_drivers)
+        matching_lol_drivers = find_matching_drivers(sorted_lol_driver_data, sorted_host_drivers)
 
 
         data = web_scrape_and_process('https://learn.microsoft.com/en-us/windows/security/application-security/application-control/windows-defender-application-control/design/microsoft-recommended-driver-block-rules','lang-xml')
         parsed_windows_driver_data = microsoft_driver_parser(data)
-        sorted_parsed_windows_driver_data = sorted(parsed_windows_driver_data)
+        sorted_windows_driver_data = sorted(parsed_windows_driver_data)
 
         print(f'  [+] Web scraping updated vulnerable driver list from https://learn.microsoft.com/en-us/windows/security/application-security/application-control/windows-defender-application-control/design/microsoft-recommended-driver-block-rules')
         time.sleep(2)
 
-        matching_windows_drivers = find_matching_drivers(sorted_parsed_windows_driver_data, sorted_host_drivers)
+        matching_windows_drivers = find_matching_drivers(sorted_windows_driver_data, sorted_host_drivers)
 
         matching_drivers = []
 
