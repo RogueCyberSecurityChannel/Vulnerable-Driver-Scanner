@@ -5,7 +5,6 @@ from bs4 import BeautifulSoup
 import time
 import sys
 
-
 def welcome():
     print('''
    ___    __      ______            ________       _____
