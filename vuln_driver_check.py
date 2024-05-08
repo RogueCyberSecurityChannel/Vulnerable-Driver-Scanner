@@ -1,19 +1,21 @@
+
 import subprocess
 import requests
 from requests.exceptions import ConnectionError, RequestException
 from bs4 import BeautifulSoup
 import time
 import sys
+import re
 
 def welcome():
     print('''
-   ___    __      ______            ________       _____
-   __ |  / /___  ____  /______      ___  __ \_________(_)__   ______________
-   __ | / /_  / / /_  /__  __ \     __  / / /_  ___/_  /__ | / /  _ \_  ___/
-   __ |/ / / /_/ /_  / _  / / /     _  /_/ /_  /   _  / __ |/ //  __/  /
-   _____/  \__,_/ /_/  /_/ /_/      /_____/ /_/    /_/  _____/ \___//_/
-  --------------------------------------------------------------------------
-           {GitHub:https://github.com/RogueCyberSecurityChannel}''')
+  ___    __      ______            ________       _____                        ______________            ______
+  __ |  / /___  ____  /______      ___  __ \_________(_)__   ______________    __  ____/__  /_______________  /__
+  __ | / /_  / / /_  /__  __ \     __  / / /_  ___/_  /__ | / /  _ \_  ___/    _  /    __  __ \  _ \  ___/_  //_/
+  __ |/ / / /_/ /_  / _  / / /     _  /_/ /_  /   _  / __ |/ //  __/  /        / /___  _  / / /  __/ /__ _  ,<
+  _____/  \__,_/ /_/  /_/ /_/      /_____/ /_/    /_/  _____/ \___//_/         \____/  /_/ /_/\___/\___/ /_/|_|
+  -------------------------------------------------------------------------------------------------------------
+                           {GitHub:https://github.com/RogueCyberSecurityChannel}''')
 
 def web_scrape_and_process(url, class_to_scrape):
     extracted_data = []
@@ -35,6 +37,16 @@ def lol_vulnerable_driver_parser(data):
                 driver_list.append(driver [:-4])
     return driver_list
 
+def lol_hash_parser(data):
+    hash_list =  []
+    pattern = r'[a-fA-F0-9]{64}'
+    for line in data:
+        raw_hash = re.findall(pattern, line)
+        hash = ''.join(raw_hash)
+        if len(hash):
+            hash_list.append(hash)
+    return hash_list
+
 def microsoft_driver_parser(data):
     driver_list = []
     for line in data:
@@ -51,6 +63,29 @@ def microsoft_driver_parser(data):
                     final_driver_list.append(driver)
     return final_driver_list[2:]
 
+def windows_hash_parser(data):
+    hash_list = []
+    for line in data:
+        hashes = line.split()
+        for hash in hashes:
+            if 'Hash' in hash:
+                hash_list.append(hash[6:])
+    for hash in hash_list:
+        if len(hash) == 0:
+            hash_list.remove(hash)
+    hash_list_2 = []
+    for hash in hash_list:
+        if '\"' in hash:
+            index = hash.find("\"")
+            hash_list_2.append(hash[:index])
+        else:
+            hash_list_2.append(hash)
+    lower_case_hashes = [hash.lower() for hash in hash_list_2]
+
+    hash_list = lower_case_hashes
+
+    return hash_list
+
 def query_and_parse_host_drivers(command):
     try:
         result = subprocess.run(command, shell=True, check=True, capture_output=True, text=True)
@@ -61,49 +96,107 @@ def query_and_parse_host_drivers(command):
         print(f"  [-] Error executing driverquery command: {e}")
         return ""
 
-def find_matching_drivers(driver_list_1, driver_list_2):
+def lists_to_dict(keys, values):
+    return dict(zip(keys, values))
+
+def driver_path_finder(command):
+    try:
+        result = subprocess.run(command, shell=True, check=True, capture_output=True, text=True)
+        output_lines = result.stdout.splitlines()
+        paths = []
+        for i, s in enumerate(output_lines):
+            for index in range(len(s) - len('C:') + 1):
+                if s[index:index + len('C:')] == 'C:':
+                    first_half = output_lines[i][index:]
+                    paths.append(first_half)
+        return paths
+    except subprocess.CalledProcessError as e:
+        print(f"  [-] Error executing driverquery command: {e}")
+        return ""
+
+def hash_host_drivers(command):
+    try:
+        result = subprocess.run(command, shell=True, check=True, capture_output=True, text=True)
+        output_lines = result.stdout.splitlines()
+        driver_hash = output_lines[1]
+        return driver_hash
+    except subprocess.CalledProcessError:
+        pass
+
+def find_matches(driver_list_1, driver_list_2):
     set1 = set(driver_list_1)
     set2 = set(driver_list_2)
 
-    matching_drivers = list(set1.intersection(set2))
-    return matching_drivers
+    matching_hashes = list(set1.intersection(set2))
+
+    return matching_hashes
 
 def main():
     welcome()
     time.sleep(1)
 
     try:
-        host_drivers = query_and_parse_host_drivers('driverquery')
-        sorted_host_drivers = sorted(host_drivers)
+        host_drivers = query_and_parse_host_drivers('driverquery /v')
 
         print(f'  \n  [+] Querying host drivers')
-        time.sleep(1)
+        time.sleep(2)
 
-        print(f'  [+] Web scraping updated vulnerable driver list from https://www.loldrivers.io')
+        print(f'  [+] Hashing all local system drivers')
+        time.sleep(2)
+
+        driver_paths = driver_path_finder('driverquery /FO list /v')
+        driver_hashes = []
+
+        for path in driver_paths:
+            driver_hash = hash_host_drivers( f'certutil -hashfile {path} SHA256')
+            driver_hashes.append(driver_hash)
+
+        hash_dict = lists_to_dict(driver_hashes, host_drivers)
+
+        print(f'  [+] Web scraping updated vulnerable driver list & corresponding SHA 256 hashes from https://www.loldrivers.io')
         time.sleep(2)
 
         data = web_scrape_and_process('https://www.loldrivers.io','row')
         parsed_lol_driver_data = lol_vulnerable_driver_parser(data)
-        sorted_lol_driver_data = sorted(parsed_lol_driver_data)
+        lol_hashes = lol_hash_parser(data)
 
-        matching_lol_drivers = find_matching_drivers(sorted_lol_driver_data, sorted_host_drivers)
-
+        print(f'  [+] Web scraping updated vulnerable driver list & corresponding SHA 256 hashes from https://learn.microsoft.com/en-us/windows/security/application-security/application-control/windows-defender-application-control/design/microsoft-recommended-driver-block-rules')
+        time.sleep(2)
 
         data = web_scrape_and_process('https://learn.microsoft.com/en-us/windows/security/application-security/application-control/windows-defender-application-control/design/microsoft-recommended-driver-block-rules','lang-xml')
         parsed_windows_driver_data = microsoft_driver_parser(data)
-        sorted_windows_driver_data = sorted(parsed_windows_driver_data)
+        windows_hashes = windows_hash_parser(data)
 
-        print(f'  [+] Web scraping updated vulnerable driver list from https://learn.microsoft.com/en-us/windows/security/application-security/application-control/windows-defender-application-control/design/microsoft-recommended-driver-block-rules')
+        print(f'  [*] Checking vulnerable drivers through name matching & hash based detection')
         time.sleep(2)
 
-        matching_windows_drivers = find_matching_drivers(sorted_windows_driver_data, sorted_host_drivers)
+        matching_lol_drivers = find_matches(parsed_lol_driver_data, host_drivers)
+        lol_hash_matches = find_matches(lol_hashes, driver_hashes)
+
+        matching_windows_drivers = find_matches(parsed_windows_driver_data, host_drivers)
+        windows_hash_matches = find_matches(windows_hashes, driver_hashes)
 
         matching_drivers = []
 
         if len(matching_lol_drivers):
-            matching_drivers.append(matching_lol_drivers)
+            for driver in matching_lol_drivers:
+                matching_drivers.append(driver)
         if len(matching_windows_drivers):
-            matching_drivers.append(matching_windows_drivers)
+            for driver in matching_windows_drivers:
+                matching_drivers.append(driver)
+        if len(lol_hash_matches):
+            print(f'  [!] HASH BASED DETECTION')
+            time.sleep(2)
+            for hash in lol_hash_matches:
+                driver = hash_dict[hash]
+                matching_drivers.append(driver)
+        if len(windows_hash_matches):
+            print(f'  [!] HASH BASED DETECTION')
+            time.sleep(2)
+            for hash in windows_hash_matches:
+                driver = hash_dict[hash]
+                matching_drivers.append(driver)
+
 
     except (ConnectionError, RequestException) as e:
         time.sleep(1)
@@ -136,7 +229,10 @@ def main():
         print(f'  [*] Run this powershell command to check all driver versions')
 
         time.sleep(2)
-        print('  [*] Get-WmiObject Win32_PnPSignedDriver | Select-Object -Property DeviceName, DriverVersion ; Get-WmiObject Win32_PnPEntity | Where-Object { $_.DeviceID -like "PCI\VEN_*" } | Select-Object -Property Name, DriverVersion\n')
+        print('  [*] Get-WmiObject Win32_PnPSignedDriver | Select-Object -Property DeviceName, DriverVersion ; Get-WmiObject Win32_PnPEntity | Where-Object { $_.DeviceID -like "PCI\VEN_*" } | Select-Object -Property Name, DriverVersion')
+
+        time.sleep(2)
+        print(f'  [*] Use a 3rd party to verify host driver hash and act accordingly\n')
 
         time.sleep(2)
     else:
@@ -144,3 +240,4 @@ def main():
 
 if __name__ == "__main__":
     main()
+
