@@ -1,4 +1,3 @@
-
 import subprocess
 import requests
 from requests.exceptions import ConnectionError, RequestException
@@ -81,9 +80,7 @@ def windows_hash_parser(data):
         else:
             hash_list_2.append(hash)
     lower_case_hashes = [hash.lower() for hash in hash_list_2]
-
     hash_list = lower_case_hashes
-
     return hash_list
 
 def query_and_parse_host_drivers(command):
@@ -126,9 +123,7 @@ def hash_host_drivers(command):
 def find_matches(driver_list_1, driver_list_2):
     set1 = set(driver_list_1)
     set2 = set(driver_list_2)
-
     matching_hashes = list(set1.intersection(set2))
-
     return matching_hashes
 
 def main():
@@ -196,8 +191,6 @@ def main():
             for hash in windows_hash_matches:
                 driver = hash_dict[hash]
                 matching_drivers.append(driver)
-
-
     except (ConnectionError, RequestException) as e:
         time.sleep(1)
 
@@ -232,11 +225,11 @@ def main():
         print('  [*] Get-WmiObject Win32_PnPSignedDriver | Select-Object -Property DeviceName, DriverVersion ; Get-WmiObject Win32_PnPEntity | Where-Object { $_.DeviceID -like "PCI\VEN_*" } | Select-Object -Property Name, DriverVersion')
 
         time.sleep(2)
-        print(f'  [*] Use a 3rd party to verify host driver hash and act accordingly\n')
+        print(f'  [*] Use a 3rd party to verify host driver hash and act accordingly')
 
         time.sleep(2)
     else:
-        print(f'  [+] No vulnerable drivers detected on your machine\n')
+        print(f'  [+] No vulnerable drivers detected on your machine')
 
 if __name__ == "__main__":
     main()
