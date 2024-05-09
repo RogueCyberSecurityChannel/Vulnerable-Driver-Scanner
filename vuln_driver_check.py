@@ -87,8 +87,8 @@ def query_and_parse_host_drivers(command):
     try:
         result = subprocess.run(command, shell=True, check=True, capture_output=True, text=True)
         output_lines = result.stdout.splitlines()
-        leftmost_words =  [line.split() [0] for line in output_lines if line.strip()]  # Extract leftmost word of non-empty lines
-        return leftmost_words [2:]
+        driver_names =  [line.split() [0] for line in output_lines if line.strip()]  # Extract leftmost word of non-empty lines
+        return driver_names [2:]
     except subprocess.CalledProcessError as e:
         print(f"  [-] Error executing driverquery command: {e}")
         return ""
@@ -104,8 +104,8 @@ def driver_path_finder(command):
         for i, s in enumerate(output_lines):
             for index in range(len(s) - len('C:') + 1):
                 if s[index:index + len('C:')] == 'C:':
-                    first_half = output_lines[i][index:]
-                    paths.append(first_half)
+                    path = output_lines[i][index:]
+                    paths.append(path)
         return paths
     except subprocess.CalledProcessError as e:
         print(f"  [-] Error executing driverquery command: {e}")
@@ -123,83 +123,10 @@ def hash_host_drivers(command):
 def find_matches(driver_list_1, driver_list_2):
     set1 = set(driver_list_1)
     set2 = set(driver_list_2)
-    matching_hashes = list(set1.intersection(set2))
-    return matching_hashes
+    matches = list(set1.intersection(set2))
+    return matches
 
-def main():
-    welcome()
-    time.sleep(1)
-
-    try:
-        host_drivers = query_and_parse_host_drivers('driverquery /v')
-
-        print(f'  \n  [+] Querying host drivers')
-        time.sleep(2)
-
-        print(f'  [+] Hashing all local system drivers')
-        time.sleep(2)
-
-        driver_paths = driver_path_finder('driverquery /FO list /v')
-        driver_hashes = []
-
-        for path in driver_paths:
-            driver_hash = hash_host_drivers( f'certutil -hashfile {path} SHA256')
-            driver_hashes.append(driver_hash)
-
-        hash_dict = lists_to_dict(driver_hashes, host_drivers)
-
-        print(f'  [+] Web scraping updated vulnerable driver list & corresponding SHA 256 hashes from https://www.loldrivers.io')
-        time.sleep(2)
-
-        data = web_scrape_and_process('https://www.loldrivers.io','row')
-        parsed_lol_driver_data = lol_vulnerable_driver_parser(data)
-        lol_hashes = lol_hash_parser(data)
-
-        print(f'  [+] Web scraping updated vulnerable driver list & corresponding SHA 256 hashes from https://learn.microsoft.com/en-us/windows/security/application-security/application-control/windows-defender-application-control/design/microsoft-recommended-driver-block-rules')
-        time.sleep(2)
-
-        data = web_scrape_and_process('https://learn.microsoft.com/en-us/windows/security/application-security/application-control/windows-defender-application-control/design/microsoft-recommended-driver-block-rules','lang-xml')
-        parsed_windows_driver_data = microsoft_driver_parser(data)
-        windows_hashes = windows_hash_parser(data)
-
-        print(f'  [*] Checking vulnerable drivers through name matching & hash based detection')
-        time.sleep(2)
-
-        matching_lol_drivers = find_matches(parsed_lol_driver_data, host_drivers)
-        lol_hash_matches = find_matches(lol_hashes, driver_hashes)
-
-        matching_windows_drivers = find_matches(parsed_windows_driver_data, host_drivers)
-        windows_hash_matches = find_matches(windows_hashes, driver_hashes)
-
-        matching_drivers = []
-
-        if len(matching_lol_drivers):
-            for driver in matching_lol_drivers:
-                matching_drivers.append(driver)
-        if len(matching_windows_drivers):
-            for driver in matching_windows_drivers:
-                matching_drivers.append(driver)
-        if len(lol_hash_matches):
-            print(f'  [!] HASH BASED DETECTION')
-            time.sleep(2)
-            for hash in lol_hash_matches:
-                driver = hash_dict[hash]
-                matching_drivers.append(driver)
-        if len(windows_hash_matches):
-            print(f'  [!] HASH BASED DETECTION')
-            time.sleep(2)
-            for hash in windows_hash_matches:
-                driver = hash_dict[hash]
-                matching_drivers.append(driver)
-    except (ConnectionError, RequestException) as e:
-        time.sleep(1)
-
-        print(f'  [-] An error occurred while trying to establish a secure connection. Please check your internet connection and try again later.\n')
-        sys.exit(1)
-
-    except Exception as e:
-        print(str(e))
-        sys.exit(1)
+def display(matching_drivers):
 
     if len(matching_drivers):
         print(f'  [!] VULNERABLE DRIVERS DETECTED')
@@ -230,6 +157,83 @@ def main():
         time.sleep(2)
     else:
         print(f'  [+] No vulnerable drivers detected on your machine')
+
+def main():
+    welcome()
+    time.sleep(1)
+
+    try:
+        print(f'  \n  [+] Querying host drivers')
+        time.sleep(2)
+
+        host_drivers = query_and_parse_host_drivers('driverquery /v')
+
+        print(f'  [+] Hashing all local system drivers')
+        time.sleep(2)
+
+        host_driver_paths = driver_path_finder('driverquery /FO list /v')
+        host_driver_hashes = []
+
+        for path in host_driver_paths:
+            driver_hash = hash_host_drivers( f'certutil -hashfile {path} SHA256')
+            host_driver_hashes.append(driver_hash)
+
+        hash_dictionary = lists_to_dict(host_driver_hashes, host_drivers)
+
+        print(f'  [+] Web scraping updated vulnerable driver list & corresponding SHA 256 hashes from https://www.loldrivers.io')
+        time.sleep(2)
+
+        data = web_scrape_and_process('https://www.loldrivers.io','row')
+        lol_vuln_driver_list = lol_vulnerable_driver_parser(data)
+        lol_driver_hashes = lol_hash_parser(data)
+
+        print(f'  [+] Web scraping updated vulnerable driver list & corresponding SHA 256 hashes from https://learn.microsoft.com/en-us/windows/security/application-security/application-control/windows-defender-application-control/design/microsoft-recommended-driver-block-rules')
+        time.sleep(2)
+
+        data = web_scrape_and_process('https://learn.microsoft.com/en-us/windows/security/application-security/application-control/windows-defender-application-control/design/microsoft-recommended-driver-block-rules','lang-xml')
+        windows_vuln_driver_list = microsoft_driver_parser(data)
+        windows_hashes = windows_hash_parser(data)
+
+        print(f'  [*] Checking vulnerable drivers through name matching & hash based detection')
+        time.sleep(2)
+
+        matching_lol_drivers = find_matches(lol_vuln_driver_list, host_drivers)
+        matching_lol_hashes = find_matches(lol_driver_hashes, host_driver_hashes)
+
+        matching_windows_drivers = find_matches(windows_vuln_driver_list, host_drivers)
+        matching_windows_hashes = find_matches(windows_hashes, host_driver_hashes)
+
+        matching_drivers = []
+
+        if len(matching_lol_drivers):
+            for driver in matching_lol_drivers:
+                matching_drivers.append(driver)
+        if len(matching_windows_drivers):
+            for driver in matching_windows_drivers:
+                matching_drivers.append(driver)
+        if len(matching_lol_hashes):
+            print(f'  [!] HASH BASED DETECTION')
+            time.sleep(2)
+            for hash in matching_lol_hashes:
+                driver = hash_dictionary[hash]
+                matching_drivers.append(driver)
+        if len(matching_windows_hashes):
+            print(f'  [!] HASH BASED DETECTION')
+            time.sleep(2)
+            for hash in matching_windows_hashes:
+                driver = hash_dictionary[hash]
+                matching_drivers.append(driver)
+
+    except (ConnectionError, RequestException) as e:
+        time.sleep(1)
+        print(f'  [-] An error occurred while trying to establish a secure connection. Please check your internet connection and try again later.\n')
+        sys.exit(1)
+
+    except Exception as e:
+        print(str(e))
+        sys.exit(1)
+
+    display(matching_drivers)
 
 if __name__ == "__main__":
     main()
