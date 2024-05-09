@@ -87,7 +87,7 @@ def query_and_parse_host_drivers(command):
     try:
         result = subprocess.run(command, shell=True, check=True, capture_output=True, text=True)
         output_lines = result.stdout.splitlines()
-        driver_names =  [line.split() [0] for line in output_lines if line.strip()]  # Extract leftmost word of non-empty lines
+        driver_names =  [line.split() [0] for line in output_lines if line.strip()]
         return driver_names [2:]
     except subprocess.CalledProcessError as e:
         print(f"  [-] Error executing driverquery command: {e}")
