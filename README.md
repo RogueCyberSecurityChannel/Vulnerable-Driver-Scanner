@@ -8,7 +8,7 @@ Vulnerable Driver Scanner
 - Look for matches
 - Suggest commands to delete any vulnerable drivers
 
-git clone:
+git clone
 ```sh
 git clone https://github.com/RogueCyberSecurityChannel/Vulnerable-Driver-Scanner
 ```
