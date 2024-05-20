@@ -1,0 +1,2 @@
+requests==2.31.0         # Library for making HTTP requests
+beautifulsoup4==4.12.2   # Library for parsing HTML and XML documents
