@@ -1,4 +1,4 @@
-Vuln Driver Scanner  
+Vulnerable Driver Scanner  
 ----------------------------
 
 - Web scrape https://learn.microsoft.com/en-us/windows/security/application-security/application-control/windows-defender-application-control/design/microsoft-recommended-driver-block-rules for known vulnerable drivers & their SHA 256 hashes
