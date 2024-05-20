@@ -7,5 +7,3 @@ Vuln Driver Check
 - SHA 256 hash all local system drivers !!!!!
 - Look for matches
 - Suggest commands to delete any vulnerable drivers 
-
-https://github.com/RogueCyberSecurityChannel/Vulnerable-Driver-Scanner.git
