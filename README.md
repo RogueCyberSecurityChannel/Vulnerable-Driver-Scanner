@@ -1,3 +1,7 @@
+```sh
+git clone https://github.com/RogueCyberSecurityChannel/Vulnerable-Driver-Scanner
+```
+
 Vuln Driver Check
 ----------------------------
 
@@ -7,6 +11,3 @@ Vuln Driver Check
 - SHA 256 hash all local system drivers !!!!!
 - Look for matches
 - Suggest commands to delete any vulnerable drivers 
-
-```sh
-git clone https://github.com/RogueCyberSecurityChannel/Vulnerable-Driver-Scanner
