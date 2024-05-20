@@ -8,5 +8,5 @@ Vuln Driver Check
 - Look for matches
 - Suggest commands to delete any vulnerable drivers 
 
-'''sh
+```sh
 git clone https://github.com/RogueCyberSecurityChannel/Vulnerable-Driver-Scanner
