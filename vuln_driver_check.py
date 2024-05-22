@@ -101,10 +101,10 @@ def driver_path_finder(command):
         result = subprocess.run(command, shell=True, check=True, capture_output=True, text=True)
         output_lines = result.stdout.splitlines()
         paths = []
-        for i, s in enumerate(output_lines):
-            for index in range(len(s) - len('C:') + 1):
-                if s[index:index + len('C:')] == 'C:':
-                    path = output_lines[i][index:]
+        for line, slice in enumerate(output_lines):
+            for index in range(len(slice) - 1):
+                if slice[index:index + 2] == 'C:':
+                    path = output_lines[line][index:]
                     paths.append(path)
         return paths
     except subprocess.CalledProcessError as e:
@@ -228,7 +228,8 @@ def main():
         time.sleep(1)
         print(f'  [-] An error occurred while trying to establish a secure connection. Please check your internet connection and try again later.\n')
         sys.exit(1)
-
+    except KeyboardInterrupt:
+        sys.exit(0)
     except Exception as e:
         print(str(e))
         sys.exit(1)
