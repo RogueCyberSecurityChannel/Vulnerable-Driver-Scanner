@@ -224,6 +224,8 @@ def main():
                 driver = hash_dictionary[hash]
                 matching_drivers.append(driver)
 
+        display(matching_drivers)
+
     except (ConnectionError, RequestException) as e:
         time.sleep(1)
         print(f'  [-] An error occurred while trying to establish a secure connection. Please check your internet connection and try again later.\n')
@@ -233,8 +235,6 @@ def main():
     except Exception as e:
         print(str(e))
         sys.exit(1)
-
-    display(matching_drivers)
 
 if __name__ == "__main__":
     main()
