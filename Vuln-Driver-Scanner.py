@@ -14,7 +14,7 @@ def welcome():
   __ |/ / / /_/ /_  / _  / / /     _  /_/ /_  /   _  / __ |/ //  __/  /        / /___  _  / / /  __/ /__ _  ,<
   _____/  \__,_/ /_/  /_/ /_/      /_____/ /_/    /_/  _____/ \___//_/         \____/  /_/ /_/\___/\___/ /_/|_|
   -------------------------------------------------------------------------------------------------------------
-                           {GitHub:https://github.com/RogueCyberSecurityChannel}''')
+                              {GitHub:https://github.com/RogueCyberSecurityChannel}''')
 
 def web_scrape_and_process(url, class_to_scrape):
     extracted_data = []
