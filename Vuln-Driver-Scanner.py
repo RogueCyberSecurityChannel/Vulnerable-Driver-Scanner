@@ -129,10 +129,10 @@ def hash_host_drivers(command):
     except subprocess.CalledProcessError:
         pass
 
-def find_matches(driver_list_1, driver_list_2):
-    set1 = set(driver_list_1)
-    set2 = set(driver_list_2)
-    matches = list(set1.intersection(set2))
+def find_matches(vulnerable_drivers, host_drivers):
+    unique_vulnerable_drivers = set(vulnerable_drivers)
+    unique_host_drivers = set(host_drivers)
+    matches = list(unique_vulnerable_drivers.intersection(unique_host_drivers))
     return matches
 
 def os_compatability_check():
@@ -180,7 +180,7 @@ def main():
     os_compatability_check()
 
     try:
-        print(f'  \n  [+] Querying host drivers')
+        print(f'\n  [+] Querying host drivers')
         time.sleep(2)
 
         host_drivers = query_and_parse_host_drivers('driverquery /v')
