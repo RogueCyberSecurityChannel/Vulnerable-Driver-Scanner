@@ -2,6 +2,7 @@ import subprocess
 import requests
 from requests.exceptions import ConnectionError, RequestException
 from bs4 import BeautifulSoup
+import os
 import time
 import sys
 import re
@@ -126,6 +127,13 @@ def find_matches(driver_list_1, driver_list_2):
     matches = list(set1.intersection(set2))
     return matches
 
+def os_compatability_check():
+    os_platform = sys.platform
+    os_name = os.name
+    if os_name != 'nt' or not os_platform.startswith('win'):
+        print(f'[-] Error! the OS name:{os_name} or OS type:{os_platform} does not appear to be windows')
+        exit(1)
+
 def display(matching_drivers):
 
     if len(matching_drivers):
@@ -161,6 +169,7 @@ def display(matching_drivers):
 def main():
     welcome()
     time.sleep(1)
+    os_compatability_check()
 
     try:
         print(f'  \n  [+] Querying host drivers')
