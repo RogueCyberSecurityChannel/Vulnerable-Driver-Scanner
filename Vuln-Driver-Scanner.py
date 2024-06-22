@@ -47,8 +47,8 @@ def lol_vulnerable_driver_parser(data):
         for tag in tag_list:
             if tag.endswith('.sys'):
                 driver_list.append(tag[:-4])
-                samples = entry.get('KnownVulnerableSamples')
-                for sample in samples:
+                sample_list = entry.get('KnownVulnerableSamples')
+                for sample in sample_list:
                     sample_sha256 = sample.get('SHA256')
                     if sample_sha256:
                         hash_list.append(sample_sha256)
