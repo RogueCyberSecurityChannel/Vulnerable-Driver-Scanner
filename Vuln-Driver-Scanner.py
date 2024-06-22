@@ -2,9 +2,11 @@ import subprocess
 import requests
 from requests.exceptions import ConnectionError, RequestException
 from bs4 import BeautifulSoup
+import os
 import time
 import sys
 import re
+import json
 
 def welcome():
     print(r'''
@@ -27,24 +29,31 @@ def web_scrape_and_process(url, class_to_scrape):
             extracted_data.append(element.text)
     return extracted_data
 
-def lol_vulnerable_driver_parser(data):
-    driver_list =  []
-    for line in data:
-        drivers = line.split()
-        for driver in drivers:
-            if driver.endswith('.sys'):
-                driver_list.append(driver [:-4])
-    return driver_list
+def get_json_endpoint(url):
+    result = []
+    response = requests.get(url)
+    if response.ok is True:
+        result = json.loads(response.text)
+    else:
+        print('  [-] Error getting drivers from: {url}')
+    return result
 
-def lol_hash_parser(data):
-    hash_list =  []
-    pattern = r'[a-fA-F0-9]{64}'
-    for line in data:
-        raw_hash = re.findall(pattern, line)
-        hash = ''.join(raw_hash)
-        if len(hash):
-            hash_list.append(hash)
-    return hash_list
+
+def lol_vulnerable_driver_parser(data):
+    driver_list = []
+    hash_list = []
+    for entry in data:
+        tag_list = entry.get('Tags')
+        for tag in tag_list:
+            if tag.endswith('.sys'):
+                driver_list.append(tag[:-4])
+                sample_list = entry.get('KnownVulnerableSamples')
+                for sample in sample_list:
+                    sample_sha256 = sample.get('SHA256')
+                    if sample_sha256:
+                        hash_list.append(sample_sha256)
+    return (driver_list, hash_list)
+
 
 def microsoft_driver_parser(data):
     driver_list = []
@@ -120,11 +129,18 @@ def hash_host_drivers(command):
     except subprocess.CalledProcessError:
         pass
 
-def find_matches(driver_list_1, driver_list_2):
-    set1 = set(driver_list_1)
-    set2 = set(driver_list_2)
-    matches = list(set1.intersection(set2))
+def find_matches(vulnerable_drivers, host_drivers):
+    unique_vulnerable_drivers = set(vulnerable_drivers)
+    unique_host_drivers = set(host_drivers)
+    matches = list(unique_vulnerable_drivers.intersection(unique_host_drivers))
     return matches
+
+def os_compatability_check():
+    os_platform = sys.platform
+    os_name = os.name
+    if os_name != 'nt' or not os_platform.startswith('win'):
+        print(f'[-] Error! the OS name:{os_name} or OS type:{os_platform} does not appear to be windows')
+        exit(1)
 
 def display(matching_drivers):
 
@@ -161,9 +177,10 @@ def display(matching_drivers):
 def main():
     welcome()
     time.sleep(1)
+    os_compatability_check()
 
     try:
-        print(f'  \n  [+] Querying host drivers')
+        print(f'\n  [+] Querying host drivers')
         time.sleep(2)
 
         host_drivers = query_and_parse_host_drivers('driverquery /v')
@@ -180,12 +197,11 @@ def main():
 
         hash_dictionary = lists_to_dict(host_driver_hashes, host_drivers)
 
-        print(f'  [+] Web scraping updated vulnerable driver list & corresponding SHA 256 hashes from https://www.loldrivers.io')
+        print(f'  [+] Query API for updated vulnerable driver list & corresponding SHA 256 hashes from https://www.loldrivers.io/api/drivers.json')
         time.sleep(2)
 
-        data = web_scrape_and_process('https://www.loldrivers.io','row')
-        lol_vuln_driver_list = lol_vulnerable_driver_parser(data)
-        lol_driver_hashes = lol_hash_parser(data)
+        data = get_json_endpoint('https://www.loldrivers.io/api/drivers.json')
+        (lol_vuln_driver_list, lol_driver_hashes) = lol_vulnerable_driver_parser(data)
 
         print(f'  [+] Web scraping updated vulnerable driver list & corresponding SHA 256 hashes from https://learn.microsoft.com/en-us/windows/security/application-security/application-control/windows-defender-application-control/design/microsoft-recommended-driver-block-rules')
         time.sleep(2)
