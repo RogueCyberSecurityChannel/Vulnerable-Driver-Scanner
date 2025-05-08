@@ -2,11 +2,9 @@ import subprocess
 import requests
 from requests.exceptions import ConnectionError, RequestException
 from bs4 import BeautifulSoup
-import os
 import time
 import sys
 import re
-import json
 
 def welcome():
     print(r'''
@@ -16,7 +14,7 @@ def welcome():
   __ |/ / / /_/ /_  / _  / / /     _  /_/ /_  /   _  / __ |/ //  __/  /        / /___  _  / / /  __/ /__ _  ,<
   _____/  \__,_/ /_/  /_/ /_/      /_____/ /_/    /_/  _____/ \___//_/         \____/  /_/ /_/\___/\___/ /_/|_|
   -------------------------------------------------------------------------------------------------------------
-                              {GitHub:https://github.com/RogueCyberSecurityChannel}''')
+                            {GitHub:https://github.com/RogueCyberSecurityChannel}''')
 
 def web_scrape_and_process(url, class_to_scrape):
     extracted_data = []
@@ -29,31 +27,24 @@ def web_scrape_and_process(url, class_to_scrape):
             extracted_data.append(element.text)
     return extracted_data
 
-def get_json_endpoint(url):
-    result = []
-    response = requests.get(url)
-    if response.ok is True:
-        result = json.loads(response.text)
-    else:
-        print('  [-] Error getting drivers from: {url}')
-    return result
-
-
 def lol_vulnerable_driver_parser(data):
-    driver_list = []
-    hash_list = []
-    for entry in data:
-        tag_list = entry.get('Tags')
-        for tag in tag_list:
-            if tag.endswith('.sys'):
-                driver_list.append(tag[:-4])
-                sample_list = entry.get('KnownVulnerableSamples')
-                for sample in sample_list:
-                    sample_sha256 = sample.get('SHA256')
-                    if sample_sha256:
-                        hash_list.append(sample_sha256)
-    return (driver_list, hash_list)
+    driver_list =  []
+    for line in data:
+        drivers = line.split()
+        for driver in drivers:
+            if driver.endswith('.sys'):
+                driver_list.append(driver [:-4])
+    return driver_list
 
+def lol_hash_parser(data):
+    hash_list =  []
+    pattern = r'[a-fA-F0-9]{64}'
+    for line in data:
+        raw_hash = re.findall(pattern, line)
+        hash = ''.join(raw_hash)
+        if len(hash):
+            hash_list.append(hash)
+    return hash_list
 
 def microsoft_driver_parser(data):
     driver_list = []
@@ -100,7 +91,7 @@ def query_and_parse_host_drivers(command):
         return driver_names [2:]
     except subprocess.CalledProcessError as e:
         print(f"  [-] Error executing driverquery command: {e}")
-        return ""
+        sys.exit(1)
 
 def lists_to_dict(keys, values):
     return dict(zip(keys, values))
@@ -118,7 +109,7 @@ def driver_path_finder(command):
         return paths
     except subprocess.CalledProcessError as e:
         print(f"  [-] Error executing driverquery command: {e}")
-        return ""
+        sys.exit(1)
 
 def hash_host_drivers(command):
     try:
@@ -129,18 +120,11 @@ def hash_host_drivers(command):
     except subprocess.CalledProcessError:
         pass
 
-def find_matches(vulnerable_drivers, host_drivers):
-    unique_vulnerable_drivers = set(vulnerable_drivers)
-    unique_host_drivers = set(host_drivers)
-    matches = list(unique_vulnerable_drivers.intersection(unique_host_drivers))
+def find_matches(driver_list_1, driver_list_2):
+    set1 = set(driver_list_1)
+    set2 = set(driver_list_2)
+    matches = list(set1.intersection(set2))
     return matches
-
-def os_compatability_check():
-    os_platform = sys.platform
-    os_name = os.name
-    if os_name != 'nt' or not os_platform.startswith('win'):
-        print(f'[-] Error! the OS name:{os_name} or OS type:{os_platform} does not appear to be windows')
-        exit(1)
 
 def display(matching_drivers):
 
@@ -177,10 +161,9 @@ def display(matching_drivers):
 def main():
     welcome()
     time.sleep(1)
-    os_compatability_check()
 
     try:
-        print(f'\n  [+] Querying host drivers')
+        print(f'  \n  [+] Querying host drivers')
         time.sleep(2)
 
         host_drivers = query_and_parse_host_drivers('driverquery /v')
@@ -197,48 +180,49 @@ def main():
 
         hash_dictionary = lists_to_dict(host_driver_hashes, host_drivers)
 
-        print(f'  [+] Query API for updated vulnerable driver list & corresponding SHA 256 hashes from https://www.loldrivers.io/api/drivers.json')
+        print(f'  [+] Web scraping updated vulnerable driver list & corresponding SHA 256 hashes from https://www.loldrivers.io')
         time.sleep(2)
 
-        data = get_json_endpoint('https://www.loldrivers.io/api/drivers.json')
-        (lol_vuln_driver_list, lol_driver_hashes) = lol_vulnerable_driver_parser(data)
+        data = web_scrape_and_process('https://www.loldrivers.io','row')
+        lol_vuln_driver_list = lol_vulnerable_driver_parser(data)
+        lol_driver_hashes = lol_hash_parser(data)
 
-        print(f'  [+] Web scraping updated vulnerable driver list & corresponding SHA 256 hashes from https://learn.microsoft.com/en-us/windows/security/application-security/application-control/windows-defender-application-control/design/microsoft-recommended-driver-block-rules')
-        time.sleep(2)
+        #  print(f'  [+] Web scraping updated vulnerable driver list & corresponding SHA 256 hashes from https://learn.microsoft.com/en-us/windows/security/application-security/application-control/windows-defender-application-control/design/microsoft-recommended-driver-block-rules')
+        #  time.sleep(2)
 
-        data = web_scrape_and_process('https://learn.microsoft.com/en-us/windows/security/application-security/application-control/windows-defender-application-control/design/microsoft-recommended-driver-block-rules','lang-xml')
-        windows_vuln_driver_list = microsoft_driver_parser(data)
-        windows_hashes = windows_hash_parser(data)
+        #  data = web_scrape_and_process('https://learn.microsoft.com/en-us/windows/security/application-security/application-control/windows-defender-application-control/design/microsoft-recommended-driver-block-rules','lang-xml')
+        #  windows_vuln_driver_list = microsoft_driver_parser(data)
+        #  windows_hashes = windows_hash_parser(data)
 
-        print(f'  [*] Checking vulnerable drivers through name matching & hash based detection')
-        time.sleep(2)
+        #  print(f'  [*] Checking vulnerable drivers through name matching & hash based detection')
+        #  time.sleep(2)
 
         matching_lol_drivers = find_matches(lol_vuln_driver_list, host_drivers)
         matching_lol_hashes = find_matches(lol_driver_hashes, host_driver_hashes)
 
-        matching_windows_drivers = find_matches(windows_vuln_driver_list, host_drivers)
-        matching_windows_hashes = find_matches(windows_hashes, host_driver_hashes)
+        #  matching_windows_drivers = find_matches(windows_vuln_driver_list, host_drivers)
+        #  matching_windows_hashes = find_matches(windows_hashes, host_driver_hashes)
 
         matching_drivers = []
 
         if len(matching_lol_drivers):
             for driver in matching_lol_drivers:
                 matching_drivers.append(driver)
-        if len(matching_windows_drivers):
-            for driver in matching_windows_drivers:
-                matching_drivers.append(driver)
+       #   if len(matching_windows_drivers):
+            #  for driver in matching_windows_drivers:
+                #  matching_drivers.append(driver)
         if len(matching_lol_hashes):
             print(f'  [!] HASH BASED DETECTION')
             time.sleep(2)
             for hash in matching_lol_hashes:
                 driver = hash_dictionary[hash]
                 matching_drivers.append(driver)
-        if len(matching_windows_hashes):
-            print(f'  [!] HASH BASED DETECTION')
-            time.sleep(2)
-            for hash in matching_windows_hashes:
-                driver = hash_dictionary[hash]
-                matching_drivers.append(driver)
+        #  if len(matching_windows_hashes):
+            #  print(f'  [!] HASH BASED DETECTION')
+            #  time.sleep(2)
+            #  for hash in matching_windows_hashes:
+                #  driver = hash_dictionary[hash]
+                #  matching_drivers.append(driver)
 
         display(matching_drivers)
 
