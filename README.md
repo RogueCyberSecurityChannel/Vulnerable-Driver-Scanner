@@ -10,7 +10,6 @@ Vulnerable Driver Scanner
                                 {GitHub:https://github.com/RogueCyberSecurityChannel} </pre>
 
 
-- Web scrape https://learn.microsoft.com/en-us/windows/security/application-security/application-control/windows-defender-application-control/design/microsoft-recommended-driver-block-rules for known vulnerable drivers & their SHA 256 hashes
 - Query lol drivers API https://www.loldrivers.io/api/drivers.json for known vulnerable drivers & their SHA 256 hashes
 - Query host drivers
 - SHA 256 hash all local system drivers!
